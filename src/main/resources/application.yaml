@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT}
+
+spring:
+  application:
+    name: thrivesonke
+  security:
+    user:
+      name: ${USER_NAME}
+      password: ${USER_PASSWORD}
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Set to 'none', 'validate', 'update', or 'create-drop' depending on your needs
+    show-sql: true      # Enables SQL logging in the console
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
