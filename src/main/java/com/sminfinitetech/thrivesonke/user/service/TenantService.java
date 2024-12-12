@@ -18,30 +18,36 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final UserService userService;
 
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Transactional
-    public Tenant createTenant(Tenant tenant){
+    public Tenant createTenant(Tenant tenant) {
+//        if (tenantRepository.findByName(tenant.getName())) {
+//            throw new IllegalArgumentException("Tenant with the same name already exists.");
+//        }
+
         // Generate a unique API key
         String apiKey = UUID.randomUUID().toString();
         tenant.setApiKey(apiKey);
         tenant.setAdminPassword(passwordEncoder.encode(tenant.getAdminPassword()));
+
         Tenant savedTenant = tenantRepository.save(tenant);
         userService.saveTenantAdminUser(tenant);
 
         return savedTenant;
     }
 
-
-    public Tenant getTenantById(Long id){
-        return tenantRepository.findById(id).orElseThrow(() -> new TenantNotFoundException("Tenant not found"));
+    public Tenant getTenantById(Long id) {
+        return tenantRepository.findById(id)
+                .orElseThrow(() -> new TenantNotFoundException("Tenant with ID " + id + " not found"));
     }
 
-
-    public List<Tenant> getAllTenants(){
-        return  tenantRepository.findAll();
+    public List<Tenant> getAllTenants() {
+        List<Tenant> tenants = tenantRepository.findAll();
+        if (tenants.isEmpty()) {
+            throw new TenantNotFoundException("No tenants found.");
+        }
+        return tenants;
     }
-
 }
