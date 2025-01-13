@@ -2,6 +2,7 @@ package com.sminfinitetech.thrivesonke.user.controller;
 
 import com.sminfinitetech.thrivesonke.helper.ApiResponse;
 import com.sminfinitetech.thrivesonke.user.dto.LoginRequest;
+import com.sminfinitetech.thrivesonke.user.dto.UserLoginResponse;
 import com.sminfinitetech.thrivesonke.user.model.User;
 import com.sminfinitetech.thrivesonke.user.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,12 +34,14 @@ public class UserController {
     }
 
 
+
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>>  userLogin(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<?>> userLogin(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             String token = userService.loginUser(loginRequest.getUsername(), loginRequest.getPassword());
-            ApiResponse<String> response = new ApiResponse<>(true, HttpStatus.OK.value(), token);
-
+            User user = userService.getUserByUsername(loginRequest.getUsername());
+            UserLoginResponse loginResponse = new UserLoginResponse(user, token);
+            ApiResponse<UserLoginResponse> response = new ApiResponse<>(true, HttpStatus.OK.value(), loginResponse);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             ApiResponse<String> responseError = new ApiResponse<>(false, HttpStatus.UNAUTHORIZED.value(), "Login failed: " + e.getMessage());

@@ -30,7 +30,7 @@ public class TenantService {
         // Generate a unique API key
         String apiKey = UUID.randomUUID().toString();
         tenant.setApiKey(apiKey);
-        tenant.setAdminPassword(passwordEncoder.encode(tenant.getAdminPassword()));
+        tenant.setAdminPassword(tenant.getAdminPassword());
 
         Tenant savedTenant = tenantRepository.save(tenant);
         userService.saveTenantAdminUser(tenant);

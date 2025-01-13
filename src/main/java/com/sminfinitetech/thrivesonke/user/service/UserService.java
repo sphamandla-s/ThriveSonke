@@ -1,5 +1,6 @@
 package com.sminfinitetech.thrivesonke.user.service;
 
+import com.sminfinitetech.thrivesonke.exception.TenantNotFoundException;
 import com.sminfinitetech.thrivesonke.user.model.Tenant;
 import com.sminfinitetech.thrivesonke.user.model.User;
 import com.sminfinitetech.thrivesonke.user.repository.UserRepository;
@@ -11,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,33 +29,54 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void saveTenantAdminUser(Tenant tenant) {
-        User adminUser = new User();
-        adminUser.setActive(1);
-        adminUser.setEmail(tenant.getEmail());
-        adminUser.setRole("ADMIN");
-        adminUser.setUsername(tenant.getAdminUsername());
-        adminUser.setPassword(passwordEncoder.encode(tenant.getAdminPassword()));
-        adminUser.setTenant(tenant);
+        if (tenant == null || tenant.getEmail() == null || tenant.getAdminUsername() == null || tenant.getAdminPassword() == null) {
+            throw new IllegalArgumentException("Tenant and its required fields must not be null.");
+        }
 
-        userRepository.save(adminUser);
+        try {
+            User adminUser = new User();
+            adminUser.setActive(1);
+            adminUser.setEmail(tenant.getEmail());
+            adminUser.setRole("ADMIN");
+            adminUser.setUsername(tenant.getAdminUsername());
+            adminUser.setPassword(passwordEncoder.encode(tenant.getAdminPassword()));
+            adminUser.setTenant(tenant);
+            userRepository.save(adminUser);
 
-        System.out.println("Admin user created for tenant: " + tenant.getId());
+            System.out.println("Admin user created for tenant: {}" + tenant.getId());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating admin user for tenant: {}" + tenant.getId() + e); // Rethrow or handle exception as needed
+        }
     }
+
 
     public String loginUser(String username, String password) {
         try {
             Authentication authenticate = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
+
             if (authenticate.isAuthenticated()) {
                 return jwtService.generateToken(username, password);
             } else {
                 throw new BadCredentialsException("Invalid credentials");
             }
         } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Login failed: Invalid username or password");
+            throw new BadCredentialsException("Invalid username or password");
         } catch (Exception e) {
             throw new RuntimeException("An unexpected error occurred during login: " + e.getMessage());
         }
+    }
+
+    public User getUserByUsername(String username){
+
+        User user = userRepository.findByUsername(username);
+
+        if (user == null) {
+            throw new TenantNotFoundException("No user found with a username " + username);
+        }
+        return user;
     }
 }
